@@ -12,7 +12,7 @@ servers:
 - url: https://{environment}.homeoffice.gov.uk/v1
   variables:
     environment:
-      default: api    # Production server
+      default: api.refdata    # Production server
       enum:
         - api.refdata         # Production server
         - api.refdata-dev     # Development server
@@ -43,15 +43,37 @@ paths:
               schema:
                 type: object
                 properties:
-                  id:
-                    type: integer
-                    format: int64
-                    example: 4
-                  name:
+                  status:
                     type: string
-                    example: countries
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  _links:
+                    type: object
+                    properties: {}
+                    example: {
+                        "self": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/12",
+                        "next": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/11",
+                        "previous": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/13"
+                    }
+                  data:
+                    type: array
+                    items: {}
+                    example: [
+                      {
+                        "id": 12,
+                        "code": "GBR",
+                        "name": "United Kingdom"
+                      }
+                    ]
+
         401:
-          description: The request requires user authentication, which has been failed
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
 
   /datasets/{name}:
     get:
@@ -63,6 +85,12 @@ paths:
       responses:
         200:
           description: Success
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
     patch:
       tags:
         - datasets
@@ -72,6 +100,12 @@ paths:
       responses:
         202:
           description: Accepted
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
     delete:
       tags:
         - datasets
@@ -81,6 +115,12 @@ paths:
       responses:
         202:
           description: Accepted
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
 
   /datasets/{name}/schema:
     get:
@@ -92,6 +132,12 @@ paths:
       responses:
         200:
           description: Success
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
 
   /datasets/{name}/search:
     get:
@@ -116,3 +162,27 @@ paths:
                           countryCode: GBR
                         }
                       ]
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+
+components:
+  schemas:
+    authentication-error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "failure"
+        code:
+          type: integer
+          example: 401
+        type:
+          type: string
+          example: "unauthorized"
+        detail:
+          type: string
+          example: "The user is not authorized to perform this request"
