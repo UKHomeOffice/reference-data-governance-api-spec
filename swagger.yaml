@@ -79,9 +79,32 @@ paths:
     get:
       tags:
         - datasets
-      summary: Gets data items within a data set (supports pagination)
+      summary: Gets data items within a data set (supports pagination and filters/queries)
       description: Longer description goes here
       operationId: getDataset
+      parameters:
+        - in: query
+          required: false
+          name: keys
+          description: the field keys that will be searched on
+          schema:
+            type: array
+            items:
+              type: string
+            example: id,name
+          style: form
+          explode: false
+        - in: query
+          required: false
+          name: values
+          description: the field values that will be searched for
+          schema:
+            type: array
+            items:
+              type: string
+            example: 32,GBR
+          style: form
+          explode: false
       responses:
         200:
           description: Success
@@ -132,36 +155,6 @@ paths:
       responses:
         200:
           description: Success
-        401:
-          description: The user is not authorized to perform this request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/authentication-error'
-
-  /datasets/{name}/search:
-    get:
-      tags:
-        - datasets
-      summary: Search a dataset
-      description: Longer description goes here
-      operationId: searchDataset
-      responses:
-        200:
-          description: Results of a search on a dataset
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  results:
-                    type: object
-                    example: [
-                        {
-                          id: 8,
-                          countryCode: GBR
-                        }
-                      ]
         401:
           description: The user is not authorized to perform this request
           content:
