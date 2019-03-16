@@ -1,0 +1,181 @@
+openapi: 3.0.0
+
+info:
+  title: Reference Data Service API
+  description: "Some more description goes here"
+  version: "0.0.1"
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+
+servers:
+- url: https://{environment}.homeoffice.gov.uk/v1
+  variables:
+    environment:
+      default: api.refdata    # Production server
+      enum:
+        - api.refdata         # Production server
+        - api.refdata-dev     # Development server
+        - api.refdata-staging # Staging server
+
+tags:
+- name: "datasets"
+  description: "Data sets are the collection of reference data tables"
+  externalDocs:
+    description: "Visit the project Wiki"
+    url: "https://github.com/UKHomeOffice/RefDataBAU/wiki"
+- name: "items"
+  description: "Items are the individual records within the reference data tables"
+
+paths:
+  /datasets:
+    get:
+      tags:
+        - datasets
+      summary: Gets the list of datasets
+      description: Longer description goes here
+      operationId: getDatasets
+      responses:
+        200:
+          description: A list of datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  _links:
+                    type: object
+                    properties: {}
+                    example: {
+                        "self": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/12",
+                        "next": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/11",
+                        "previous": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/13"
+                    }
+                  data:
+                    type: array
+                    items: {}
+                    example: [
+                      {
+                        "id": 12,
+                        "code": "GBR",
+                        "name": "United Kingdom"
+                      }
+                    ]
+
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+
+  /datasets/{name}:
+    get:
+      tags:
+        - datasets
+      summary: Gets data items within a data set (supports pagination and filters/queries)
+      description: Longer description goes here
+      operationId: getDataset
+      parameters:
+        - in: query
+          required: false
+          name: keys
+          description: the field keys that will be searched on
+          schema:
+            type: array
+            items:
+              type: string
+            example: id,name
+          style: form
+          explode: false
+        - in: query
+          required: false
+          name: values
+          description: the field values that will be searched for
+          schema:
+            type: array
+            items:
+              type: string
+            example: 32,GBR
+          style: form
+          explode: false
+      responses:
+        200:
+          description: Success
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+    patch:
+      tags:
+        - datasets
+      summary: Request an update to the definition of a dataset
+      description: Longer description goes here
+      operationId: patchDataset
+      responses:
+        202:
+          description: Accepted
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+    delete:
+      tags:
+        - datasets
+      summary: Request the deletion of a dataset
+      description: Longer description goes here
+      operationId: deleteDataset
+      responses:
+        202:
+          description: Accepted
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+
+  /datasets/{name}/schema:
+    get:
+      tags:
+        - datasets
+      summary: Gets the schema of the dataset
+      description: Longer description goes here
+      operationId: getDatasetSchema
+      responses:
+        200:
+          description: Success
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+
+components:
+  schemas:
+    authentication-error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "failure"
+        code:
+          type: integer
+          example: 401
+        type:
+          type: string
+          example: "unauthorized"
+        detail:
+          type: string
+          example: "The user is not authorized to perform this request"
