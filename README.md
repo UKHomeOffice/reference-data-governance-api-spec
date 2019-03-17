@@ -11,10 +11,10 @@ This project uses the [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blo
 You can view the Swagger spec in a local Swagger docker container by running the following command, from this project's directory:
 
 ```
-docker run -p 80:8080 -e SWAGGER_JSON=/tmp/swagger.yaml -v `pwd`:/tmp swaggerapi/swagger-ui
+docker run -p 80:8080 -e SWAGGER_JSON=/tmp/swagger.yml -v `pwd`:/tmp swaggerapi/swagger-ui
 ```
 
-After making changes to the `swagger.yaml` you will need to refresh your browser to see the updates (there is no need to restart the Docker container).
+After making changes to the `swagger.yml` you will need to refresh your browser to see the updates (there is no need to restart the Docker container).
 
 ## Format of API responses
 
