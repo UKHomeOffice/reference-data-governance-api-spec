@@ -12,15 +12,15 @@ servers:
 - url: https://{environment}.homeoffice.gov.uk/v1
   variables:
     environment:
-      default: api.refdata    # Production server
+      default: mock-api.refdata-dev    # Mock server in Development
       enum:
-        - api.refdata         # Production server
-        - api.refdata-dev     # Development server
-        - api.refdata-staging # Staging server
+        - api.refdata            # Production server
+        - api.refdata-dev        # Development server
+        - mock-api.refdata-dev   # Mock server in Development
 
 tags:
-- name: "datasets"
-  description: "Data sets are the collection of reference data tables"
+- name: "entities"
+  description: "Entities are the collection of reference data tables"
   externalDocs:
     description: "Visit the project Wiki"
     url: "https://github.com/UKHomeOffice/RefDataBAU/wiki"
@@ -28,16 +28,18 @@ tags:
   description: "Items are the individual records within the reference data tables"
 
 paths:
-  /datasets:
+  /entities:
     get:
       tags:
-        - datasets
-      summary: Gets the list of datasets
-      description: Longer description goes here
-      operationId: getDatasets
+        - entities
+      summary: Gets the list of entities
+      operationId: getEntities
+      description: |
+        Get the list of entities that are being managed by the Reference Data Services.
+        This includes details about the entities' schemas.
       responses:
         200:
-          description: A list of datasets
+          description: A list of entities
           content:
             application/json:
               schema:
@@ -49,25 +51,66 @@ paths:
                   code:
                     type: integer
                     example: 200
-                  _links:
-                    type: object
-                    properties: {}
-                    example: {
-                        "self": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/12",
-                        "next": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/11",
-                        "previous": "https://api.refdata.homeoffice.gov.uk/v1/datasets/countries/items/13"
-                    }
                   data:
                     type: array
                     items: {}
                     example: [
                       {
                         "id": 12,
-                        "code": "GBR",
-                        "name": "United Kingdom"
+                        "tablename": "country",
+                        "description": "Countries",
+                        "schema": {
+                          # need to confirm formatting of this chunk
+                          # id integer primary key,
+                          # iso31661alpha2 CHARACTER VARYING(2) NOT NULL,
+                          # iso31661alpha3 CHARACTER VARYING(3) NOT NULL,
+                          # name CHARACTER VARYING(40) NOT NULL,
+                          # continent CHARACTER VARYING(2) NOT NULL,
+                          # dial CHARACTER VARYING(20),
+                          # iso31661numeric INTEGER NOT NULL,
+                          # validfrom date,
+                          # validto date
+                        },
+                        "lastupdated": "10/03/2019",
+                        "dataversion": "1"
+                      },
+                      {
+                        "id": 13,
+                        "tablename": "nationality",
+                        "description": "Nationalities",
+                        "schema": {
+                          # need to confirm formatting of this chunk
+                          # id INTEGER NOT NULL PRIMARY KEY,
+                          # nationality CHARACTER VARYING(330) NOT NULL,
+                          # "iso31661alpha3" CHARACTER VARYING(3) NULL,
+                          # "iso31661alpha2" CHARACTER VARYING(2) NULL,
+                          # visarequired BOOLEAN NOT NULL,
+                          # evwoptional BOOLEAN NOT NULL,
+                          # diplomaticexception BOOLEAN NOT NULL,
+                          # specialexception BOOLEAN NOT NULL,
+                          # countryid INTEGER NULL REFERENCES country(id),
+                          # validfrom date,
+                          # validto date
+                        },
+                        "lastupdated": "10/03/2019",
+                        "dataversion": "1"
                       }
                     ]
+          links:
+            getEntityByName:
+              operationId: getEntity
+              parameters:
+                name: '$response.body#/data/{n}/tablename'
+              description: |
+                The `tablename` value returned in the response can be used as the `name` parameter in `GET /entities/{name}`.
 
+                NB. multiple links will be provided, one per Entity (but the OpenAPI 3.0 specification doesn't cover this). The `{n}` is a accessing the 0-based indexes of the array elements.
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
         401:
           description: The user is not authorized to perform this request
           content:
@@ -75,101 +118,344 @@ paths:
               schema:
                 $ref: '#/components/schemas/authentication-error'
 
-  /datasets/{name}:
+  /entities/{name}:
     get:
       tags:
-        - datasets
-      summary: Gets data items within a data set (supports pagination and filters/queries)
-      description: Longer description goes here
-      operationId: getDataset
+        - entities
+      summary: Gets data items for an entity (supports pagination and filters/queries)
+      operationId: getItems
+      description: |
+        Get the data items within a data set (supporting pagination).
+        Supports query string parameters (optional) to search within the data set. To support flexibility across entity definitions the main query parameters are two arrays: keys, values. These accept comma-separated lists.
+        Defaults to only returning ‘active’ data items.
+        If the number of keys and values in the request are not equal, the request will be rejected.
       parameters:
         - in: query
-          required: false
           name: keys
-          description: the field keys that will be searched on
           schema:
             type: array
             items:
               type: string
-            example: id,name
+            example: [alliance, aviation]
+          description: The field keys that will be searched on.
           style: form
           explode: false
         - in: query
-          required: false
           name: values
-          description: the field values that will be searched for
           schema:
             type: array
             items:
               type: string
-            example: 32,GBR
+            example: [OneWorld, true]
+          description: The field values that will be searched for.
           style: form
           explode: false
+        - in: query
+          name: includeInactive
+          schema:
+            type: boolean
+            default: false
+          description: Controls whether inactive records should be returned as part of the result set. Defaults to only returning currently active records.
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: The number of items to skip before starting to collect the result set.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+          description: The maximum number of items to return in the result set.
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  entity:
+                    type: string
+                    example: country
+                  offset:
+                    type: integer
+                    example: 78
+                  limit:
+                    type: integer
+                    example: 3
+                  data:
+                    type: array
+                    items: {}
+                    example: [
+                      {
+                        "id": 78,
+                        "iso31661alpha2": FJ,
+                        "iso31661alpha3": FJI,
+                        "name": Fiji,
+                        "continent": OC,
+                        "dial": 679,
+                        iso31661numeric": 242,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                      {
+                        "id": 79,
+                        "iso31661alpha2": FI,
+                        "iso31661alpha3": FIN,
+                        "name": Finland,
+                        "continent": EU,
+                        "dial": 358,
+                        iso31661numeric": 246,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                      {
+                        "id": 80,
+                        "iso31661alpha2": FR,
+                        "iso31661alpha3": FRA,
+                        "name": France,
+                        "continent": EU,
+                        "dial": 33,
+                        iso31661numeric": 250,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                    ]
+          links:
+            next:
+              operationId: getItems
+              parameters:
+                entity: '$response.body#/entity'
+                offset: '$response.body#/offset'
+                limit: '$response.body#/limit'
+              description: |
+                The `entity`, `offset` and `limit` values returned in the response can be used as the parameters in `GET /entities/{entity}?offset={offset+limit}&limit={limit}`.
+            previous:
+              operationId: getItems
+              parameters:
+                entity: '$response.body#/entity'
+                offset: '$response.body#/offset'
+                limit: '$response.body#/limit'
+              description: |
+                The `entity`, `offset` and `limit` values returned in the response can be used as the parameters in `GET /entities/{entity}?offset={offset-limit}&limit={limit}`.
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
     patch:
       tags:
-        - datasets
-      summary: Request an update to the definition of a dataset
-      description: Longer description goes here
-      operationId: patchDataset
-      responses:
-        202:
-          description: Accepted
-        401:
-          description: The user is not authorized to perform this request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/authentication-error'
-    delete:
-      tags:
-        - datasets
-      summary: Request the deletion of a dataset
-      description: Longer description goes here
-      operationId: deleteDataset
-      responses:
-        202:
-          description: Accepted
-        401:
-          description: The user is not authorized to perform this request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/authentication-error'
+        - entities
+      summary: Request an update to the schema definition of a entity
+      operationId: patchEntity
+      description: |
+        Request updates to the definition of an existing data set (as a partial update).
 
-  /datasets/{name}/schema:
+        A request can only be raised for one property of the entity's schema definition at a time.
+
+        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
+      parameters:
+        - in: query
+          name: field
+          schema:
+            type: string
+            example: name
+          required: true
+          description: The field that the change is being requested for.
+        - in: query
+          name: property
+          schema:
+            type: string
+            example: dataType
+          required: true
+          description: The property that the change is being requested for.
+        - in: query
+          name: newValue
+          schema:
+            type: string
+            example: CHARACTER VARYING(50)
+          required: true
+          description: The new value being requested.
+      responses:
+        202:
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/request-accepted'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
+  /entities/{name}/schema:
     get:
       tags:
-        - datasets
-      summary: Gets the schema of the dataset
-      description: Longer description goes here
-      operationId: getDatasetSchema
+        - entities
+      summary: Gets the schema of the entity
+      operationId: getEntitySchema
+      description: |
+        Gets the data schema for the entity, used in two ways:
+
+        •	by the application to dynamically render data sets.
+
+        •	to display the schema to users.
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  schema:
+                    type: object
+                    example: {
+                      # need to confirm formatting of this chunk
+                      # id integer primary key,
+                      # iso31661alpha2 CHARACTER VARYING(2) NOT NULL,
+                      # iso31661alpha3 CHARACTER VARYING(3) NOT NULL,
+                      # name CHARACTER VARYING(40) NOT NULL,
+                      # continent CHARACTER VARYING(2) NOT NULL,
+                      # dial CHARACTER VARYING(20),
+                      # iso31661numeric INTEGER NOT NULL,
+                      # validfrom date,
+                      # validto date
+                    }
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
+  /entities/{name}/history:
+    get:
+      deprecated: true
+      tags:
+        - entities
+      summary: Gets the history of changes to the entity
+      operationId: getEntityHistory
+      description: |
+        Describes the history of the entity.
+
+        This feature is yet to be designed and is currently inactive.
+      responses:
+        200:
+          description: Success
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
 
 components:
   schemas:
+    request-accepted:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "success"
+        code:
+          type: integer
+          example: 202
+        type:
+          type: string
+          example: "accepted"
+        detail:
+          type: string
+          example: "The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon, as it might be disallowed when processing actually takes place."
+    bad-request:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "client error"
+        code:
+          type: integer
+          example: 400
+        type:
+          type: string
+          example: "bad request"
+        detail:
+          type: string
+          example: "The server cannot or will not process the request due to something that is perceived to be a client error"
     authentication-error:
       type: object
       properties:
         status:
           type: string
-          example: "failure"
+          example: "client error"
         code:
           type: integer
           example: 401
@@ -179,3 +465,18 @@ components:
         detail:
           type: string
           example: "The user is not authorized to perform this request"
+    not-found:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "client error"
+        code:
+          type: integer
+          example: 404
+        type:
+          type: string
+          example: "not found"
+        detail:
+          type: string
+          example: "The origin server did not find a current representation for the target resource or is not willing to disclose that one exists"

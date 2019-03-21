@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: api-spec
-        image: quay.io/ukhomeofficedigital/ref-data-gov-api-spec:latest
+        image: quay.io/ukhomeofficedigital/ref-data-gov-api-spec:{{.DRONE_COMMIT_SHA}}
         imagePullPolicy: Always
         securityContext:
           runAsNonRoot: true
