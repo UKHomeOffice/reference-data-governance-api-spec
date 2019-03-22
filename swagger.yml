@@ -9,7 +9,7 @@ info:
     url: "https://opensource.org/licenses/MIT"
 
 servers:
-- url: https://{environment}.homeoffice.gov.uk/v1
+- url: https://{environment}.homeoffice.gov.uk
   variables:
     environment:
       default: mock-api.refdata-dev    # Mock server in Development
@@ -28,7 +28,7 @@ tags:
   description: "Items are the individual records within the reference data tables"
 
 paths:
-  /entities:
+  /v1/entities:
     get:
       tags:
         - entities
@@ -36,6 +36,7 @@ paths:
       operationId: getEntities
       description: |
         Get the list of entities that are being managed by the Reference Data Services.
+
         This includes details about the entities' schemas.
       responses:
         200:
@@ -118,7 +119,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/authentication-error'
 
-  /entities/{name}:
+  /v1/entities/{name}:
     get:
       tags:
         - entities
@@ -126,10 +127,20 @@ paths:
       operationId: getItems
       description: |
         Get the data items within a data set (supporting pagination).
+
         Supports query string parameters (optional) to search within the data set. To support flexibility across entity definitions the main query parameters are two arrays: keys, values. These accept comma-separated lists.
+
         Defaults to only returning ‘active’ data items.
+
         If the number of keys and values in the request are not equal, the request will be rejected.
       parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
         - in: query
           name: keys
           schema:
@@ -186,7 +197,7 @@ paths:
                     example: 200
                   entity:
                     type: string
-                    example: country
+                    example: countries
                   offset:
                     type: integer
                     example: 78
@@ -279,6 +290,13 @@ paths:
 
         In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
       parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
         - in: query
           name: field
           schema:
@@ -326,7 +344,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/not-found'
 
-  /entities/{name}/schema:
+    post:
+      tags:
+        - entities
+      summary: Adds a new item to the entity
+      operationId: addItemToEntity
+      description: |
+        Request the addition of an item to an existing data set.
+
+        A request can only be raised for one item at a time.
+
+        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity that the item is to be added to.
+          required: true
+          example: countries
+        - in: body
+          name: data
+          schema:
+            type: object
+            properties: {}
+            example: {
+              "id": 78,
+              "iso31661alpha2": FJ,
+              "iso31661alpha3": FJI,
+              "name": Fiji,
+              "continent": OC,
+              "dial": 679,
+              iso31661numeric": 242,
+              "validfrom": 10/03/2019,
+              "validto": null
+            }
+          description: The data to be used to create the new item.
+          required: true
+      responses:
+        202:
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/request-accepted'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
+  /v1/entities/{name}/schema:
     get:
       tags:
         - entities
@@ -338,6 +419,14 @@ paths:
         •	by the application to dynamically render data sets.
 
         •	to display the schema to users.
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
       responses:
         200:
           description: Success
@@ -385,7 +474,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/not-found'
 
-  /entities/{name}/history:
+  /v1/entities/{name}/history:
     get:
       deprecated: true
       tags:
@@ -396,6 +485,14 @@ paths:
         Describes the history of the entity.
 
         This feature is yet to be designed and is currently inactive.
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
       responses:
         200:
           description: Success
@@ -417,6 +514,149 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/not-found'
+
+  /v1/entities/{name}/items/{id}:
+    get:
+      tags:
+        - items
+      summary: Gets a single item
+      operationId: getItem
+      description: |
+        Get the details of a single data item, by ID.
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: 23
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  entity:
+                    type: string
+                    example: countries
+                  itemid:
+                    type: string
+                    example: 78
+                  data:
+                    type: object
+                    properties: {}
+                    example: {
+                      "id": 78,
+                      "iso31661alpha2": FJ,
+                      "iso31661alpha3": FJI,
+                      "name": Fiji,
+                      "continent": OC,
+                      "dial": 679,
+                      iso31661numeric": 242,
+                      "validfrom": null,
+                      "validto": null
+                    }
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
+    patch:
+      tags:
+        - items
+      summary: Patch a single data item, by ID
+      operationId: patchItem
+      description: |
+        Request an update to the definition of an existing data item (as a partial update).
+
+        A request can only be raised for one field of the item at a time.
+
+        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          description: The name of the entity.
+          required: true
+          example: countries
+        - in: path
+          name: id
+          schema:
+            type: string
+          description: The id of the data item to be updated.
+          required: true
+          example: 23
+        - in: query
+          name: field
+          schema:
+            type: string
+            example: name
+          required: true
+          description: The field that the change is being requested for.
+        - in: query
+          name: newValue
+          schema:
+            type: string
+            example: Belize
+          required: true
+          description: The new value being requested.
+      responses:
+        202:
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/request-accepted'
+        400:
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bad-request'
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/authentication-error'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/not-found'
+
 
 components:
   schemas:
