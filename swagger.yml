@@ -8,15 +8,19 @@ info:
     name: "MIT"
     url: "https://opensource.org/licenses/MIT"
 
+# Added by API Auto Mocking Plugin
 servers:
-- url: https://{environment}.homeoffice.gov.uk
-  variables:
-    environment:
-      default: mock-api.refdata-dev    # Mock server in Development
-      enum:
-        - api.refdata            # Production server
-        - api.refdata-dev        # Development server
-        - mock-api.refdata-dev   # Mock server in Development
+- description: SwaggerHub API Auto Mocking
+  url: https://virtserver.swaggerhub.com/Viable-Data/Reference-Data-Service-API/0.0.1
+# servers:
+# - url: https://{environment}.homeoffice.gov.uk
+#   variables:
+#     environment:
+#       default: mock-api.refdata-dev    # Mock server in Development
+#       enum:
+#         - api.refdata            # Production server
+#         - api.refdata-dev        # Development server
+#         - mock-api.refdata-dev   # Mock server in Development
 
 tags:
 - name: "entities"
@@ -215,7 +219,7 @@ paths:
                         "name": Fiji,
                         "continent": OC,
                         "dial": 679,
-                        iso31661numeric": 242,
+                        "iso31661numeric": 242,
                         "validfrom": null,
                         "validto": null
                       },
@@ -226,7 +230,7 @@ paths:
                         "name": Finland,
                         "continent": EU,
                         "dial": 358,
-                        iso31661numeric": 246,
+                        "iso31661numeric": 246,
                         "validfrom": null,
                         "validto": null
                       },
@@ -237,7 +241,7 @@ paths:
                         "name": France,
                         "continent": EU,
                         "dial": 33,
-                        iso31661numeric": 250,
+                        "iso31661numeric": 250,
                         "validfrom": null,
                         "validto": null
                       },
@@ -363,24 +367,14 @@ paths:
           description: The name of the entity that the item is to be added to.
           required: true
           example: countries
-        - in: body
-          name: data
-          schema:
-            type: object
-            properties: {}
-            example: {
-              "id": 78,
-              "iso31661alpha2": FJ,
-              "iso31661alpha3": FJI,
-              "name": Fiji,
-              "continent": OC,
-              "dial": 679,
-              iso31661numeric": 242,
-              "validfrom": 10/03/2019,
-              "validto": null
-            }
-          description: The data to be used to create the new item.
-          required: true
+      requestBody:
+        description: The data to be used to create the new item.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/item'
+
       responses:
         202:
           description: Accepted
@@ -537,7 +531,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: 23
+          example: 78
       responses:
         200:
           description: Success
@@ -568,7 +562,7 @@ paths:
                       "name": Fiji,
                       "continent": OC,
                       "dial": 679,
-                      iso31661numeric": 242,
+                      "iso31661numeric": 242,
                       "validfrom": null,
                       "validto": null
                     }
@@ -660,6 +654,20 @@ paths:
 
 components:
   schemas:
+    item:
+      type: object
+      properties: {}
+      example: {
+        "id": 78,
+        "iso31661alpha2": FJ,
+        "iso31661alpha3": FJI,
+        "name": Fiji,
+        "continent": OC,
+        "dial": 679,
+        "iso31661numeric": 242,
+        "validfrom": 10/03/2019,
+        "validto": null
+      }
     request-accepted:
       type: object
       properties:
