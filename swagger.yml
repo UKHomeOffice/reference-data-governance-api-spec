@@ -2,7 +2,10 @@ openapi: 3.0.0
 
 info:
   title: Reference Data Service API
-  description: "Some more description goes here"
+  description: |
+    This document provides the specification for the Reference Data Service API being developed by the UK Home Office.
+
+    This API specification uses the [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md) standard.
   version: "0.0.1"
   license:
     name: "MIT"
@@ -44,7 +47,7 @@ paths:
         This includes details about the entities' schemas.
       responses:
         200:
-          description: A list of entities
+          description: A list of entities, including their data schemas
           content:
             application/json:
               schema:
@@ -63,18 +66,110 @@ paths:
                       {
                         "id": 12,
                         "tablename": "country",
-                        "description": "Countries",
+                        "label": "Countries",
+                        "description": "The list of recognised Countries, with additional information (including ISO codes and continent).",
                         "schema": {
-                          # need to confirm formatting of this chunk
-                          # id integer primary key,
-                          # iso31661alpha2 CHARACTER VARYING(2) NOT NULL,
-                          # iso31661alpha3 CHARACTER VARYING(3) NOT NULL,
-                          # name CHARACTER VARYING(40) NOT NULL,
-                          # continent CHARACTER VARYING(2) NOT NULL,
-                          # dial CHARACTER VARYING(20),
-                          # iso31661numeric INTEGER NOT NULL,
-                          # validfrom date,
-                          # validto date
+                          "description": {
+                            "description": "Countries",
+                            "schemalastupdated": "10/03/2019",
+                            "dataversion": 1
+                          },
+                          "required": [
+                            "id",
+                            "iso31661alpha2",
+                            "iso31661alpha3",
+                            "name",
+                            "continent",
+                            "iso31661numeric"
+                          ],
+                          "properties": {
+                            "id": {
+                              "format": "integer",
+                              "type": "integer",
+                              "description": {
+                                "label": "Identifier",
+                                "description": "database unique identity record",
+                                "summaryview": "false"
+                              }
+                            },
+                            "iso31661alpha2": {
+                              "maxLength": 2,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "2 digit alpha code",
+                                "description": "Country 2 Character alpha code",
+                                "summaryview": "true"
+                              }
+                            },
+                            "iso31661alpha3": {
+                              "maxLength": 3,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "3 digit alpha code",
+                                "description": "Country 3 Character alpha code",
+                                "summaryview": "true"
+                              }
+                            },
+                            "name": {
+                                "maxLength": 40,
+                                "format": "character varying",
+                                "type": "string",
+                                "description": {
+                                  "label": "Country name",
+                                  "description": "Country name",
+                                  "summaryview": "true"
+                                }
+                            },
+                            "continent": {
+                              "maxLength": 2,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "Continent",
+                                "description": "Countinent country is part of",
+                                "summaryview": "true"
+                              }
+                            },
+                            "dial": {
+                              "maxLength": 20,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "Phone dial code",
+                                "description": "Country dailing prefix",
+                                "summaryview": "true"
+                              }
+                            },
+                            "iso31661numeric": {
+                              "format": "integer",
+                              "type": "integer",
+                              "description": {
+                                "label": "3 digit numeric code",
+                                "description": "Country numeric ISO code",
+                                "summaryview": "true"
+                              }
+                            },
+                            "validfrom": {
+                              "format": "date",
+                              "type": "string",
+                              "description": {
+                                "label": "Valid from date",
+                                "description": "Item valid from date",
+                                "summaryview" : "false"
+                              }
+                            },
+                            "validto": {
+                              "format": "date",
+                              "type": "string",
+                              "description": {
+                                "label": "Valid to date",
+                                "description": "Item valid to date",
+                                "summaryview" : "false"
+                              }
+                            }
+                          }
                         },
                         "lastupdated": "10/03/2019",
                         "dataversion": "1"
@@ -82,20 +177,127 @@ paths:
                       {
                         "id": 13,
                         "tablename": "nationality",
-                        "description": "Nationalities",
+                        "label": "Nationalities",
+                        "description": "The list of recognised Nationalities, including some additonal information.",
                         "schema": {
-                          # need to confirm formatting of this chunk
-                          # id INTEGER NOT NULL PRIMARY KEY,
-                          # nationality CHARACTER VARYING(330) NOT NULL,
-                          # "iso31661alpha3" CHARACTER VARYING(3) NULL,
-                          # "iso31661alpha2" CHARACTER VARYING(2) NULL,
-                          # visarequired BOOLEAN NOT NULL,
-                          # evwoptional BOOLEAN NOT NULL,
-                          # diplomaticexception BOOLEAN NOT NULL,
-                          # specialexception BOOLEAN NOT NULL,
-                          # countryid INTEGER NULL REFERENCES country(id),
-                          # validfrom date,
-                          # validto date
+                          "description": {
+                            "description": "Nationalities",
+                            "schemalastupdated": "10/03/2019",
+                            "dataversion": 1
+                          },
+                          "required": [
+                            "id",
+                            "nationality",
+                            "visarequired",
+                            "evwoptional",
+                            "diplomaticexception",
+                            "specialexception"
+                          ],
+                          "properties": {
+                            "id": {
+                              "format": "integer",
+                              "type": "integer",
+                              "description": {
+                                "label": "Identifier",
+                                "description": "database unique identity record",
+                                "summaryview": "false"
+                              }
+                            },
+                            "nationality": {
+                              "maxLength": 330,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "Identifier",
+                                "description": "Nationality names",
+                                "summaryview": "true"
+                              }
+                            },
+                            "iso31661alpha3": {
+                              "maxLength": 3,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "3 digit alpha code",
+                                "description": "Country 3 Character alpha code",
+                                "summaryview": "true"
+                              }
+                            },
+                            "iso31661alpha2": {
+                              "maxLength": 2,
+                              "format": "character varying",
+                              "type": "string",
+                              "description": {
+                                "label": "2 digit alpha code",
+                                "description": "Country 2 Character alpha code",
+                                "summaryview": "true"
+                              }
+                            },
+                            "visarequired": {
+                              "format": "boolean",
+                              "type": "boolean",
+                              "description": {
+                                "label": "Visa required",
+                                "description": "Is VISA required to visit UK",
+                                "summaryview": "false"
+                              }
+                            },
+                            "evwoptional": {
+                              "format": "boolean",
+                              "type": "boolean",
+                              "description": {
+                                "label": "Optional - EVW",
+                                "description": "Is Electronic Visa Waver optional to visit UK",
+                                "summaryview": "false"
+                              }
+                            },
+                            "diplomaticexception": {
+                              "format": "boolean",
+                              "type": "boolean",
+                              "description": {
+                                "label": "Exception - Diplomatic",
+                                "description": "Are there diplomatic exceptions for visiting the UK",
+                                "summaryview": "false"
+                              }
+                            },
+                            "specialexception": {
+                              "format": "boolean",
+                              "type": "boolean",
+                              "description": {
+                                "label": "Exception - Special",
+                                "description": "Are there special exceptions for visiting the UK",
+                                "summaryview": "false"
+                              }
+                            },
+                            "countryid": {
+                              "format": "integer",
+                              "type": "integer",
+                              "description": {
+                                "label": "Linked country id",
+                                "description": "Country link to Country dataset",
+                                "summaryview": "false",
+                                "linkedrecord": "country(id)"
+                              }
+                            },
+                            "validfrom": {
+                              "format": "date",
+                              "type": "string",
+                              "description": {
+                                "label": "Valid from date",
+                                "description": "Item valid from date",
+                                "summaryview": "false"
+                              }
+                            },
+                            "validto": {
+                              "format": "date",
+                              "type": "string",
+                              "description": {
+                                "label": "Valid to date",
+                                "description": "Item valid to date",
+                                "summaryview": "false"
+                              }
+                            }
+                          },
                         },
                         "lastupdated": "10/03/2019",
                         "dataversion": "1"
@@ -109,7 +311,7 @@ paths:
               description: |
                 The `tablename` value returned in the response can be used as the `name` parameter in `GET /entities/{name}`.
 
-                NB. multiple links will be provided, one per Entity (but the OpenAPI 3.0 specification doesn't cover this). The `{n}` is a accessing the 0-based indexes of the array elements.
+                NB. multiple links will be provided, one per Entity (but the OpenAPI 3.0 specification doesn't cover this). The `{n}` is accessing the 0-based indexes of the array elements.
         400:
           description: Bad request
           content:
@@ -133,10 +335,12 @@ paths:
         Get the data items within a data set (supporting pagination).
 
         Supports query string parameters (optional) to search within the data set. To support flexibility across entity definitions the main query parameters are two arrays: keys, values. These accept comma-separated lists.
-
-        Defaults to only returning ‘active’ data items.
-
         If the number of keys and values in the request are not equal, the request will be rejected.
+
+        Defaults to:
+
+        - returning both the schema and the data items (the data items can be omitted by setting `schemaOnly=true` in the query parameters)
+        - only returning ‘active’ data items (include inactive items by setting `includeInactive=true` in the query parameters).
       parameters:
         - in: path
           name: name
@@ -165,6 +369,12 @@ paths:
           description: The field values that will be searched for.
           style: form
           explode: false
+        - in: query
+          name: schemaOnly
+          schema:
+            type: boolean
+            default: false
+          description: Controls whether the response contains only the schema, or the schema and the data items.
         - in: query
           name: includeInactive
           schema:
@@ -199,9 +409,117 @@ paths:
                   code:
                     type: integer
                     example: 200
-                  entity:
+                  entityName:
                     type: string
                     example: countries
+                  entityLabel:
+                    type: string
+                    example: Countries
+                  entitySchema:
+                    type: object
+                    example: {
+                      "description": {
+                        "description": "Countries",
+                        "schemalastupdated": "10/03/2019",
+                        "dataversion": 1
+                      },
+                      "required": [
+                        "id",
+                        "iso31661alpha2",
+                        "iso31661alpha3",
+                        "name",
+                        "continent",
+                        "iso31661numeric"
+                      ],
+                      "properties": {
+                        "id": {
+                          "format": "integer",
+                          "type": "integer",
+                          "description": {
+                            "label": "Identifier",
+                            "description": "database unique identity record",
+                            "summaryview": "false"
+                          }
+                        },
+                        "iso31661alpha2": {
+                          "maxLength": 2,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "2 digit alpha code",
+                            "description": "Country 2 Character alpha code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "iso31661alpha3": {
+                          "maxLength": 3,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "3 digit alpha code",
+                            "description": "Country 3 Character alpha code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "name": {
+                            "maxLength": 40,
+                            "format": "character varying",
+                            "type": "string",
+                            "description": {
+                              "label": "Country name",
+                              "description": "Country name",
+                              "summaryview": "true"
+                            }
+                        },
+                        "continent": {
+                          "maxLength": 2,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "Continent",
+                            "description": "Countinent country is part of",
+                            "summaryview": "true"
+                          }
+                        },
+                        "dial": {
+                          "maxLength": 20,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "Phone dial code",
+                            "description": "Country dailing prefix",
+                            "summaryview": "true"
+                          }
+                        },
+                        "iso31661numeric": {
+                          "format": "integer",
+                          "type": "integer",
+                          "description": {
+                            "label": "3 digit numeric code",
+                            "description": "Country numeric ISO code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "validfrom": {
+                          "format": "date",
+                          "type": "string",
+                          "description": {
+                            "label": "Valid from date",
+                            "description": "Item valid from date",
+                            "summaryview" : "false"
+                          }
+                        },
+                        "validto": {
+                          "format": "date",
+                          "type": "string",
+                          "description": {
+                            "label": "Valid to date",
+                            "description": "Item valid to date",
+                            "summaryview" : "false"
+                          }
+                        }
+                      }
+                    }
                   offset:
                     type: integer
                     example: 78
@@ -250,7 +568,7 @@ paths:
             next:
               operationId: getItems
               parameters:
-                entity: '$response.body#/entity'
+                entity: '$response.body#/entityName'
                 offset: '$response.body#/offset'
                 limit: '$response.body#/limit'
               description: |
@@ -258,7 +576,7 @@ paths:
             previous:
               operationId: getItems
               parameters:
-                entity: '$response.body#/entity'
+                entity: '$response.body#/entityName'
                 offset: '$response.body#/offset'
                 limit: '$response.body#/limit'
               description: |
@@ -382,73 +700,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/request-accepted'
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/bad-request'
-        401:
-          description: The user is not authorized to perform this request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/not-found'
-
-  /v1/entities/{name}/schema:
-    get:
-      tags:
-        - entities
-      summary: Gets the schema of the entity
-      operationId: getEntitySchema
-      description: |
-        Gets the data schema for the entity, used in two ways:
-
-        •	by the application to dynamically render data sets.
-
-        •	to display the schema to users.
-      parameters:
-        - in: path
-          name: name
-          schema:
-            type: string
-          description: The name of the entity.
-          required: true
-          example: countries
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "success"
-                  code:
-                    type: integer
-                    example: 200
-                  schema:
-                    type: object
-                    example: {
-                      # need to confirm formatting of this chunk
-                      # id integer primary key,
-                      # iso31661alpha2 CHARACTER VARYING(2) NOT NULL,
-                      # iso31661alpha3 CHARACTER VARYING(3) NOT NULL,
-                      # name CHARACTER VARYING(40) NOT NULL,
-                      # continent CHARACTER VARYING(2) NOT NULL,
-                      # dial CHARACTER VARYING(20),
-                      # iso31661numeric INTEGER NOT NULL,
-                      # validfrom date,
-                      # validto date
-                    }
         400:
           description: Bad request
           content:
