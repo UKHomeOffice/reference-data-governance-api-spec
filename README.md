@@ -1,4 +1,4 @@
-# reference-data-governance-api-spec
+# Reference Data Governance API Specification
 
 >The API specification for the Reference Data Service API (which also includes a mock server)
 
