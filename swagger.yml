@@ -65,7 +65,7 @@ paths:
                     example: [
                       {
                         "id": 12,
-                        "tablename": "country",
+                        "entityName": "country",
                         "label": "Countries",
                         "description": "The list of recognised Countries, with additional information (including ISO codes and continent).",
                         "schema": {
@@ -157,7 +157,7 @@ paths:
                               "description": {
                                 "label": "Valid from date",
                                 "description": "Item valid from date",
-                                "summaryview" : "false"
+                                "summaryview": "false"
                               }
                             },
                             "validto": {
@@ -166,7 +166,7 @@ paths:
                               "description": {
                                 "label": "Valid to date",
                                 "description": "Item valid to date",
-                                "summaryview" : "false"
+                                "summaryview": "false"
                               }
                             }
                           }
@@ -176,7 +176,7 @@ paths:
                       },
                       {
                         "id": 13,
-                        "tablename": "nationality",
+                        "entityName": "nationality",
                         "label": "Nationalities",
                         "description": "The list of recognised Nationalities, including some additonal information.",
                         "schema": {
@@ -348,7 +348,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: countries
+          example: country
         - in: query
           name: keys
           schema:
@@ -411,7 +411,7 @@ paths:
                     example: 200
                   entityName:
                     type: string
-                    example: countries
+                    example: country
                   entityLabel:
                     type: string
                     example: Countries
@@ -506,7 +506,7 @@ paths:
                           "description": {
                             "label": "Valid from date",
                             "description": "Item valid from date",
-                            "summaryview" : "false"
+                            "summaryview": "false"
                           }
                         },
                         "validto": {
@@ -515,7 +515,7 @@ paths:
                           "description": {
                             "label": "Valid to date",
                             "description": "Item valid to date",
-                            "summaryview" : "false"
+                            "summaryview": "false"
                           }
                         }
                       }
@@ -618,7 +618,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: countries
+          example: country
         - in: query
           name: field
           schema:
@@ -684,7 +684,7 @@ paths:
             type: string
           description: The name of the entity that the item is to be added to.
           required: true
-          example: countries
+          example: country
       requestBody:
         description: The data to be used to create the new item.
         required: true
@@ -737,7 +737,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: countries
+          example: country
       responses:
         200:
           description: Success
@@ -775,7 +775,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: countries
+          example: country
         - in: path
           name: id
           schema:
@@ -799,7 +799,7 @@ paths:
                     example: 200
                   entityName:
                     type: string
-                    example: countries
+                    example: country
                   entityLabel:
                     type: string
                     example: Countries
@@ -894,7 +894,7 @@ paths:
                           "description": {
                             "label": "Valid from date",
                             "description": "Item valid from date",
-                            "summaryview" : "false"
+                            "summaryview": "false"
                           }
                         },
                         "validto": {
@@ -903,7 +903,7 @@ paths:
                           "description": {
                             "label": "Valid to date",
                             "description": "Item valid to date",
-                            "summaryview" : "false"
+                            "summaryview": "false"
                           }
                         }
                       }
@@ -962,7 +962,7 @@ paths:
             type: string
           description: The name of the entity.
           required: true
-          example: countries
+          example: country
         - in: path
           name: id
           schema:
