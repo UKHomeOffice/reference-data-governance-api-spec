@@ -1010,8 +1010,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/not-found'
 
+security:
+  - oAuthKeycloak: []
 
 components:
+  securitySchemes:
+    oAuthKeycloak:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://sso-dev.notprod.homeoffice.gov.uk/auth/realms/cop-dev/protocol/openid-connect/auth
+          tokenUrl: https://sso-dev.notprod.homeoffice.gov.uk/auth/realms/cop-dev/protocol/openid-connect/token
+          scopes: {}
+
   schemas:
     item:
       type: object
