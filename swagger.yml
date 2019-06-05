@@ -336,6 +336,25 @@ paths:
 
         Supports query string parameters (optional) to search within the data set. To support flexibility across entity definitions the main query parameters are two arrays: keys, values. These accept comma-separated lists.
         If the number of keys and values in the request are not equal, the request will be rejected.
+        
+        Supports single `eq` (equal) filtering, example:
+            - id=eq.3
+            - city=eq.London
+        
+        Supports multiple `eq` (equal) filtering, example:
+            - firstName=eq.Pedro&lastName=eq.Curado
+            - city=eq.London&postcode=eq.SW13 9RQ
+        
+        Supports single and multiple `neq` (not equal) filtering, example:
+            - continent=neq.AS&continent=eq.EU 
+            - continent=neq.AS&continent=neq.EU
+        
+        Supports single `in` (in list) filtering, example:
+            - name=in.(Portugal, United Kingdom)
+
+        Not supported yet:
+            - currently only un-quoted values are supported this means that using values with commas will not return any values for instance: street=in.(Flat 2, 33 Joy St, London, Flat 9, 20 Sad St, London) 
+
 
         Defaults to:
 
