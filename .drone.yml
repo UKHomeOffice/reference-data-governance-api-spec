@@ -39,3 +39,22 @@ pipeline:
     when:
       branch: master
       event: [ push, deployment ]
+
+  notify:
+    image: plugins/slack
+    secrets: [ SLACK_WEBHOOK ]
+    channel: cop-deployments
+    username: Drone Build Watcher
+    template: >
+        {{#success build.status}}
+          *{{repo.name}} - Build {{build.number}} succeeded*
+          {{build.link}}
+        {{else}}
+          *{{repo.name}} - Build {{build.number}} failed*
+          {{build.link}}
+        {{/success}}
+    when:
+      branch: master
+      event: [ push, deployment ]
+      status: [ success, failure ]
+      
