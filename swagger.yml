@@ -1064,6 +1064,25 @@ paths:
                 - /v2/entities/<entity_name>?select=name
                 - /v2/entities/<entity_name>?select=name,age
         - in: query
+          name: sort
+          schema:
+            type: string
+          example: /v2/entities/<entity_name>?sort=name.asc
+          description: |
+            Supports `sort` (sorting) of columns ascending and descending, example:
+
+                - /v2/entities/<entity_name>?sort=name.asc
+                - /v2/entities/<entity_name>?sort=name.desc
+        - in: query
+          name: filter
+          schema:
+            type: string
+          example: /v2/entities/<entity_name>?limit=5
+          description: |
+            Supports `limit` of rows being returned, example:
+
+                - /v2/entities/<entity_name>?limit=5
+        - in: query
           name: filter
           schema:
             type: string
@@ -1104,15 +1123,6 @@ paths:
                 - /v2/entities/<entity_name>?filter=age=gte.25
                 - /v2/entities/<entity_name>?filter=age=lte.30
                 - /v2/entities/<entity_name>?filter=age=gte.25,&filter=age=lte.30
-
-            Supports `sort` (sorting) of columns ascending and descending, example:
-
-                - /v2/entities/<entity_name>?sort=name.asc
-                - /v2/entities/<entity_name>?filter=age=eq.34&sort=name.desc
-
-            Supports `limit` of rows being returned, example:
-
-                - /v2/entities/<entity_name>?filter=surname=eq.Smith&limit=5
 
             Not supported yet:
 
