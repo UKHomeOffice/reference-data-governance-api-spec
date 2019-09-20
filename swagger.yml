@@ -1,9 +1,9 @@
 openapi: 3.0.0
 
 info:
-  title: Reference Data Service API
+  title: Ref Data API
   description: |
-    The API specification for the Reference Data Service API being developed by the UK Home Office.
+    The API specification for the Ref Data API being developed by the UK Home Office.
 
     This API specification uses the [OpenAPI](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md) standard.
   version: "0.0.1"
@@ -40,14 +40,13 @@ paths:
       tags:
         - entities
       summary: Gets the list of entities
-      operationId: getEntities
       description: |
         Get the list of entities that are being managed by the Reference Data Services.
 
-        This includes details about the entities' schemas.
+        This includes details about the entitie(s) schemas.
       responses:
         200:
-          description: A list of entities, including their data schemas
+          description: OK
           content:
             application/json:
               schema:
@@ -64,16 +63,12 @@ paths:
                     items: {}
                     example: [
                       {
-                        "id": 12,
                         "entityName": "country",
-                        "label": "Countries",
-                        "description": "The list of recognised Countries, with additional information (including ISO codes and continent).",
                         "schema": {
-                          "description": {
-                            "description": "Countries",
-                            "schemalastupdated": "10/03/2019",
-                            "dataversion": 1
-                          },
+                          "label": "Countries",
+                          "description": "A list of countries as defined in the ISO 3166-1 Standard.",
+                          "schemalastupdated": "10/03/2019",
+                          "dataversion": 1,
                           "required": [
                             "id",
                             "iso31661alpha2",
@@ -175,16 +170,12 @@ paths:
                         "dataversion": "1"
                       },
                       {
-                        "id": 13,
                         "entityName": "nationality",
-                        "label": "Nationalities",
-                        "description": "The list of recognised Nationalities, including some additonal information.",
                         "schema": {
-                          "description": {
-                            "description": "Nationalities",
-                            "schemalastupdated": "10/03/2019",
-                            "dataversion": 1
-                          },
+                          "label": "Nationalities",
+                          "description": "A list of global nationalities.",
+                          "schemalastupdated": "10/03/2019",
+                          "dataversion": 1,
                           "required": [
                             "id",
                             "nationality",
@@ -303,120 +294,103 @@ paths:
                         "dataversion": "1"
                       }
                     ]
-          links:
-            getEntityByName:
-              operationId: getEntity
-              parameters:
-                name: '$response.body#/data/{n}/tablename'
-              description: |
-                The `tablename` value returned in the response can be used as the `name` parameter in `GET /entities/{name}`.
-
-                NB. multiple links will be provided, one per Entity (but the OpenAPI 3.0 specification doesn't cover this). The `{n}` is accessing the 0-based indexes of the array elements.
         400:
-          description: Bad request
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unable to retrieve tables from database"
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
   /v1/entities/{name}:
     get:
       tags:
         - entities
-      summary: Gets data items for an entity (supports pagination and filters/queries)
-      operationId: getItems
+      summary: Get an entity data items.
       description: |
-        Get the data items within a data set (supporting pagination).
+        Get an entity data items.
 
-        Supports query string parameters (optional) to search within the data set. To support flexibility across entity definitions the main query parameters are two arrays: keys, values. These accept comma-separated lists.
-        If the number of keys and values in the request are not equal, the request will be rejected.
-        
-        Supports single `eq` (equal) filtering, example:
-            - id=eq.3
-            - city=eq.London
-        
-        Supports multiple `eq` (equal) filtering, example:
-            - firstName=eq.Pedro&lastName=eq.Curado
-            - city=eq.London&postcode=eq.SW13 9RQ
-        
-        Supports single and multiple `neq` (not equal) filtering, example:
-            - continent=neq.AS&continent=eq.EU 
-            - continent=neq.AS&continent=neq.EU
-        
-        Supports single `in` (in list) filtering, example:
-            - name=in.(Portugal, United Kingdom)
-
-        Not supported yet:
-            - currently only un-quoted values are supported this means that using values with commas will not return any values for instance: street=in.(Flat 2, 33 Joy St, London, Flat 9, 20 Sad St, London) 
-
-
-        Defaults to:
-
-        - returning both the schema and the data items (the data items can be omitted by setting `schemaOnly=true` in the query parameters)
-        - only returning ‘active’ data items (include inactive items by setting `includeInactive=true` in the query parameters).
+        Supports query string parameters (optional) to search within the entity.
       parameters:
         - in: path
           name: name
+          example: country
           schema:
             type: string
           description: The name of the entity.
           required: true
-          example: country
-        - in: query
-          name: keys
-          schema:
-            type: array
-            items:
-              type: string
-            example: [alliance, aviation]
-          description: The field keys that will be searched on.
-          style: form
-          explode: false
-        - in: query
-          name: values
-          schema:
-            type: array
-            items:
-              type: string
-            example: [OneWorld, true]
-          description: The field values that will be searched for.
-          style: form
-          explode: false
         - in: query
           name: schemaOnly
           schema:
             type: boolean
             default: false
-          description: Controls whether the response contains only the schema, or the schema and the data items.
+          description: |
+            Controls whether the response returns with both entity schema and data items or just the entity schema, defaults to both entity schema and data items, example:
+
+                - /v1/entities/<entity_name>?schemaOnly=true
+
         - in: query
-          name: includeInactive
+          name: kwargs
+          example: "/v1/entities/<entity_name>?id=eq.3"
           schema:
-            type: boolean
-            default: false
-          description: Controls whether inactive records should be returned as part of the result set. Defaults to only returning currently active records.
-        - in: query
-          name: offset
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: The number of items to skip before starting to collect the result set.
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 1
-            default: 100
-          description: The maximum number of items to return in the result set.
+            type: string
+          description: |
+            Supported query string parameters:
+
+            Supports single `eq` (equal) filtering, example:
+
+                - /v1/entities/<entity_name>?id=eq.3
+                - /v1/entities/<entity_name>?city=eq.London
+                - /v1/entities/<entity_name>?email=eq.john@mail.com
+
+            Supports multiple `eq` (equal) filtering, example:
+
+                - /v1/entities/<entity_name>?firstName=eq.Pedro&lastName=eq.Curado
+                - /v1/entities/<entity_name>?city=eq.London&postcode=eq.SW13 9RQ
+
+            Supports `eq` (equal) filtering of NULL values, example:
+
+                - /v1/entities/<entity_name>?name=eq.null
+
+            Supports single and multiple `neq` (not equal) filtering, example:
+
+                - /v1/entities/<entity_name>?continent=neq.AS&continent=eq.EU
+                - /v1/entities/<entity_name>?continent=neq.AS&continent=neq.EU
+
+            Supports single `in` (in list) filtering, example:
+
+                - /v1/entities/<entity_name>?name=in.(Portugal, United Kingdom)
+
+            Supports single and multiple `gt` (greater than), `lt` (less than) filtering, example:
+
+                - /v1/entities/<entity_name>?shiftstartdatetime=gt.2019-06-20T12:00:00
+                - /v1/entities/<entity_name>?shiftstartdatetime=lt.2019-06-20T12:00:00
+                - /v1/entities/<entity_name>?shiftstartdatetime=gt.2019-06-20T12:00:00,&shiftstartdatetime=lt.2019-06-22T12:00:00
+
+            Supports single and multiple `gte` (greater than or equal), `lte` (less than or equal) filtering, example:
+
+                - /v1/entities/<entity_name>?age=gte.25
+                - /v1/entities/<entity_name>?age=lte.30
+                - /v1/entities/<entity_name>?age=gte.25,&age=lte.30
+
+            Not supported yet:
+
+              - Currently only un-quoted values are supported this means that using values with commas will not return any values for instance: street=in.(Flat 2, 33 Joy St, London, Flat 9, 20 Sad St, London)
       responses:
         200:
-          description: Success
+          description: OK
           content:
             application/json:
               schema:
@@ -429,19 +403,15 @@ paths:
                     type: integer
                     example: 200
                   entityName:
-                    type: string
-                    example: country
-                  entityLabel:
-                    type: string
-                    example: Countries
+                    type: string,
+                    example: "country"
                   entitySchema:
                     type: object
                     example: {
-                      "description": {
-                        "description": "Countries",
-                        "schemalastupdated": "10/03/2019",
-                        "dataversion": 1
-                      },
+                      "label": "Countries",
+                      "description": "A list of countries as defined in the ISO 3166-1 Standard.",
+                      "schemalastupdated": "10/03/2019",
+                      "dataversion": 1,
                       "required": [
                         "id",
                         "iso31661alpha2",
@@ -539,12 +509,6 @@ paths:
                         }
                       }
                     }
-                  offset:
-                    type: integer
-                    example: 78
-                  limit:
-                    type: integer
-                    example: 3
                   data:
                     type: array
                     items: {}
@@ -583,53 +547,35 @@ paths:
                         "validto": null
                       },
                     ]
-          links:
-            next:
-              operationId: getItems
-              parameters:
-                entity: '$response.body#/entityName'
-                offset: '$response.body#/offset'
-                limit: '$response.body#/limit'
-              description: |
-                The `entity`, `offset` and `limit` values returned in the response can be used as the parameters in `GET /entities/{entity}?offset={offset+limit}&limit={limit}`.
-            previous:
-              operationId: getItems
-              parameters:
-                entity: '$response.body#/entityName'
-                offset: '$response.body#/offset'
-                limit: '$response.body#/limit'
-              description: |
-                The `entity`, `offset` and `limit` values returned in the response can be used as the parameters in `GET /entities/{entity}?offset={offset-limit}&limit={limit}`.
         400:
-          description: Bad request
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unable to retrieve data from table country"
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/not-found'
-
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
     patch:
       tags:
         - entities
       summary: Request an update to the schema definition of a entity
-      operationId: patchEntity
       description: |
-        Request updates to the definition of an existing data set (as a partial update).
+        Request updates to the definition of an existing entity.
 
-        A request can only be raised for one property of the entity's schema definition at a time.
+        Each request can only update one field at a time.
 
-        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
       parameters:
         - in: path
           name: name
@@ -638,64 +584,102 @@ paths:
           description: The name of the entity.
           required: true
           example: country
-        - in: query
+        - in: body
+          name: entity
+          schema:
+            type: string
+            example: Country
+          required: true
+          description: The name of the entity that the update is being requested for.
+        - in: body
           name: field
           schema:
             type: string
-            example: name
+            example: Name
           required: true
           description: The field that the change is being requested for.
-        - in: query
-          name: property
-          schema:
-            type: string
-            example: dataType
-          required: true
-          description: The property that the change is being requested for.
-        - in: query
+        - in: body
           name: newValue
           schema:
             type: string
-            example: CHARACTER VARYING(50)
+            example: Italy
           required: true
           description: The new value being requested.
+        - in: body
+          name: validFrom
+          schema:
+            type: string
+            nullable: true
+            example: 10/08/2019
+          required: false
+          description: The date the new value should be applied from.
+        - in: body
+          name: validTo
+          schema:
+            type: string
+            nullable: true
+            example: null
+          required: false
+          description: The date the new value should expire.
       responses:
-        202:
-          description: Accepted
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/request-accepted'
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  requestId:
+                    type: string
+                    example: "1e8b5842-d704-4931-90c5-b97b767f0986"
         400:
-          description: Bad request
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        422:
+          description: Unprocessable request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/not-found'
-
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    example: [
+                      {
+                        "location": "body",
+                        "param": "validFrom",
+                        "msg": "Invalid value"
+                      },
+                      {
+                        "location": "body",
+                        "param": "validTo",
+                        "msg": "Invalid value"
+                      }
+                    ]
     post:
       tags:
         - entities
-      summary: Adds a new item to the entity
-      operationId: addItemToEntity
+      summary: Adds a new data item to the entity.
       description: |
-        Request the addition of an item to an existing data set.
+        Add a new data item to the entity.
 
-        A request can only be raised for one item at a time.
-
-        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
+        Each request can only add one data item to the entity at a time.
       parameters:
         - in: path
           name: name
@@ -710,83 +694,59 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/item'
-
-      responses:
-        202:
-          description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/request-accepted'
-        400:
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/bad-request'
-        401:
-          description: The user is not authorized to perform this request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/not-found'
-
-  /v1/entities/{name}/history:
-    get:
-      deprecated: true
-      tags:
-        - entities
-      summary: Gets the history of changes to the entity
-      operationId: getEntityHistory
-      description: |
-        Describes the history of the entity.
-
-        This feature is yet to be designed and is currently inactive.
-      parameters:
-        - in: path
-          name: name
-          schema:
-            type: string
-          description: The name of the entity.
-          required: true
-          example: country
+              type: object
+              properties:
+                iso31661alpha2:
+                  type: string
+                  example: FJ
+                iso31661alpha3:
+                  type: string
+                  example: FJI
+                name:
+                  type: string
+                  example: Fiji
       responses:
         200:
-          description: Success
-        400:
-          description: Bad request
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  requestId:
+                    type: string
+                    example: "1e8b5842-d704-4931-90c5-b97b767f0986"
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid JSON object"
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/not-found'
-
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
   /v1/entities/{name}/items/{id}:
     get:
       tags:
         - items
-      summary: Gets a single item
+      summary: Gets a single entity item.
       operationId: getItem
       description: |
-        Get the details of a single data item, by ID.
+        Gets a single entity item.
       parameters:
         - in: path
           name: name
@@ -799,12 +759,12 @@ paths:
           name: id
           schema:
             type: string
-          description: The name of the entity.
+          description: The id of the entity item.
           required: true
           example: 78
       responses:
         200:
-          description: Success
+          description: OK
           content:
             application/json:
               schema:
@@ -819,17 +779,13 @@ paths:
                   entityName:
                     type: string
                     example: country
-                  entityLabel:
-                    type: string
-                    example: Countries
                   entitySchema:
                     type: object
                     example: {
-                      "description": {
-                        "description": "Countries",
-                        "schemalastupdated": "10/03/2019",
-                        "dataversion": 1
-                      },
+                      "label": "Countries",
+                      "description": "A list of countries as defined in the ISO 3166-1 Standard.",
+                      "schemalastupdated": "10/03/2019",
+                      "dataversion": 1,
                       "required": [
                         "id",
                         "iso31661alpha2",
@@ -945,35 +901,33 @@ paths:
                       "validto": null
                     }
         400:
-          description: Bad request
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unable to retrieve data from table country"
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/not-found'
-
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
     patch:
       tags:
         - items
-      summary: Patch a single data item, by ID
-      operationId: patchItem
+      summary: Update a single entity item.
       description: |
-        Request an update to the definition of an existing data item (as a partial update).
+        Request an update of an entity item field.
 
-        A request can only be raised for one field of the item at a time.
-
-        In a future version of the API, the response will include a link to the resulting `request` resource (but this isn't implemented yet).
+        Each request can only update one field at at time.
       parameters:
         - in: path
           name: name
@@ -986,49 +940,362 @@ paths:
           name: id
           schema:
             type: string
-          description: The id of the data item to be updated.
+          description: The id of the entity item to be updated.
           required: true
           example: 23
-        - in: query
+        - in: body
           name: field
           schema:
             type: string
             example: name
           required: true
           description: The field that the change is being requested for.
-        - in: query
+        - in: body
           name: newValue
           schema:
             type: string
             example: Belize
           required: true
           description: The new value being requested.
+        - in: body
+          name: validFrom
+          schema:
+            type: string
+            nullable: true
+            example: 12/03/2020
+          required: false
+          description: The date the new value should be applied from.
+        - in: body
+          name: validTo
+          schema:
+            type: string
+            nullable: true
+            example: 12/05/2040
+          required: false
+          description: The date the new value should expire.
       responses:
-        202:
-          description: Accepted
+        200:
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/request-accepted'
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 200
+                  requestId:
+                    type: string
+                    example: "1e8b5842-d704-4931-90c5-b97b767f0986"
         400:
-          description: Bad request
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/bad-request'
+                type: object
         401:
           description: The user is not authorized to perform this request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/authentication-error'
-        404:
-          description: Not Found
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        422:
+          description: Unprocessable request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/not-found'
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    example: [
+                      {
+                        "location": "body",
+                        "param": "field",
+                        "msg": "Invalid value"
+                      }
+                    ]
+  /v2/entities/{name}:
+    get:
+      tags:
+        - entities
+      summary: Get an entity data items.
+      description: |
+        Get an entity data items.
 
+        Supports query string parameters (optional) to search within the entity.
+      parameters:
+        - in: path
+          name: name
+          schema:
+            type: string
+          example: country
+          description: The name of the entity.
+          required: true
+        - in: query
+          name: mode
+          schema:
+            type: string
+          example: /v2/entities/<entity_name>?mode=dataOnly
+          description: |
+            Controls whether the response is returned with both schema and data or just either the schema or data, defaults to both entity schema and data items, example:
+
+            Response with only the schema, example:
+
+                - /v2/entities/<entity_name>?mode=schemaOnly
+
+            Response with only the data, example:
+
+                - /v2/entities/<entity_name>?mode=dataOnly
+        - in: query
+          name: select
+          schema:
+            type: string
+          example: /v2/entities/<entity_name>?select=name
+          description: |
+            The columns required, if not passed it defaults to all columns.
+
+            Supports single and multiple columns selection, example:
+
+                - /v2/entities/<entity_name>?select=name
+                - /v2/entities/<entity_name>?select=name,age
+        - in: query
+          name: filter
+          schema:
+            type: string
+          example: /v2/entities/<entity_name>?filter=id=eq.3
+          description: |
+            Supports single `eq` (equal) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=id=eq.3
+                - /v2/entities/<entity_name>?filter=city=eq.London
+                - /v2/entities/<entity_name>?filter=email=eq.john@mail.com
+
+            Supports multiple `eq` (equal) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=firstName=eq.Pedro&filter=lastName=eq.Curado
+                - /v2/entities/<entity_name>?filter=city=eq.London&filter=postcode=eq.SW13 9RQ
+
+            Supports `eq` (equal) filtering of NULL values, example:
+
+                - /v2/entities/<entity_name>?name=eq.null
+
+            Supports single and multiple `neq` (not equal) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=continent=neq.AS&filter=continent=eq.EU
+                - /v2/entities/<entity_name>?filter=continent=neq.AS&filter=continent=neq.EU
+
+            Supports single `in` (in list) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=name=in.(Portugal, United Kingdom)
+
+            Supports single and multiple `gt` (greater than), `lt` (less than) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=shiftstartdatetime=gt.2019-06-20T12:00:00
+                - /v2/entities/<entity_name>?filter=shiftstartdatetime=lt.2019-06-20T12:00:00
+                - /v2/entities/<entity_name>?filter=shiftstartdatetime=gt.2019-06-20T12:00:00,&filter=shiftstartdatetime=lt.2019-06-22T12:00:00
+
+            Supports single and multiple `gte` (greater than or equal), `lte` (less than or equal) filtering, example:
+
+                - /v2/entities/<entity_name>?filter=age=gte.25
+                - /v2/entities/<entity_name>?filter=age=lte.30
+                - /v2/entities/<entity_name>?filter=age=gte.25,&filter=age=lte.30
+
+            Supports `sort` (sorting) of columns ascending and descending, example:
+
+                - /v2/entities/<entity_name>?sort=name.asc
+                - /v2/entities/<entity_name>?filter=age=eq.34&sort=name.desc
+
+            Supports `limit` of rows being returned, example:
+
+                - /v2/entities/<entity_name>?filter=surname=eq.Smith&limit=5
+
+            Not supported yet:
+
+              - Currently only un-quoted values are supported this means that using values with commas will not return any values for instance: street=in.(Flat 2, 33 Joy St, London, Flat 9, 20 Sad St, London)
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  code:
+                    type: integer
+                    example: 200
+                  entityName:
+                    type: string
+                    example: country
+                  entitySchema:
+                    type: object
+                    example: {
+                      "label": "Countries",
+                      "description": "A list of countries as defined in the ISO 3166-1 Standard.",
+                      "schemalastupdated": "10/03/2019",
+                      "dataversion": 1,
+                      "required": [
+                        "id",
+                        "iso31661alpha2",
+                        "iso31661alpha3",
+                        "name",
+                        "continent",
+                        "iso31661numeric"
+                      ],
+                      "properties": {
+                        "id": {
+                          "format": "integer",
+                          "type": "integer",
+                          "description": {
+                            "label": "Identifier",
+                            "description": "database unique identity record",
+                            "summaryview": "false"
+                          }
+                        },
+                        "iso31661alpha2": {
+                          "maxLength": 2,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "2 digit alpha code",
+                            "description": "Country 2 Character alpha code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "iso31661alpha3": {
+                          "maxLength": 3,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "3 digit alpha code",
+                            "description": "Country 3 Character alpha code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "name": {
+                            "maxLength": 40,
+                            "format": "character varying",
+                            "type": "string",
+                            "description": {
+                              "label": "Country name",
+                              "description": "Country name",
+                              "summaryview": "true"
+                            }
+                        },
+                        "continent": {
+                          "maxLength": 2,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "Continent",
+                            "description": "Countinent country is part of",
+                            "summaryview": "true"
+                          }
+                        },
+                        "dial": {
+                          "maxLength": 20,
+                          "format": "character varying",
+                          "type": "string",
+                          "description": {
+                            "label": "Phone dial code",
+                            "description": "Country dailing prefix",
+                            "summaryview": "true"
+                          }
+                        },
+                        "iso31661numeric": {
+                          "format": "integer",
+                          "type": "integer",
+                          "description": {
+                            "label": "3 digit numeric code",
+                            "description": "Country numeric ISO code",
+                            "summaryview": "true"
+                          }
+                        },
+                        "validfrom": {
+                          "format": "date",
+                          "type": "string",
+                          "description": {
+                            "label": "Valid from date",
+                            "description": "Item valid from date",
+                            "summaryview": "false"
+                          }
+                        },
+                        "validto": {
+                          "format": "date",
+                          "type": "string",
+                          "description": {
+                            "label": "Valid to date",
+                            "description": "Item valid to date",
+                            "summaryview": "false"
+                          }
+                        }
+                      }
+                    }
+                  data:
+                    type: array
+                    items: {}
+                    example: [
+                      {
+                        "id": 78,
+                        "iso31661alpha2": FJ,
+                        "iso31661alpha3": FJI,
+                        "name": Fiji,
+                        "continent": OC,
+                        "dial": 679,
+                        "iso31661numeric": 242,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                      {
+                        "id": 79,
+                        "iso31661alpha2": FI,
+                        "iso31661alpha3": FIN,
+                        "name": Finland,
+                        "continent": EU,
+                        "dial": 358,
+                        "iso31661numeric": 246,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                      {
+                        "id": 80,
+                        "iso31661alpha2": FR,
+                        "iso31661alpha3": FRA,
+                        "name": France,
+                        "continent": EU,
+                        "dial": 33,
+                        "iso31661numeric": 250,
+                        "validfrom": null,
+                        "validto": null
+                      },
+                    ]
+        400:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unable to retrieve data from table country"
+        401:
+          description: The user is not authorized to perform this request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
 security:
   - oAuthKeycloak: []
 
@@ -1041,79 +1308,3 @@ components:
           authorizationUrl: https://sso-dev.notprod.homeoffice.gov.uk/auth/realms/cop-dev/protocol/openid-connect/auth
           tokenUrl: https://sso-dev.notprod.homeoffice.gov.uk/auth/realms/cop-dev/protocol/openid-connect/token
           scopes: {}
-
-  schemas:
-    item:
-      type: object
-      properties: {}
-      example: {
-        "id": 78,
-        "iso31661alpha2": FJ,
-        "iso31661alpha3": FJI,
-        "name": Fiji,
-        "continent": OC,
-        "dial": 679,
-        "iso31661numeric": 242,
-        "validfrom": 10/03/2019,
-        "validto": null
-      }
-    request-accepted:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "success"
-        code:
-          type: integer
-          example: 202
-        type:
-          type: string
-          example: "accepted"
-        detail:
-          type: string
-          example: "The request has been accepted for processing, but the processing has not been completed. The request might or might not eventually be acted upon, as it might be disallowed when processing actually takes place."
-    bad-request:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "client error"
-        code:
-          type: integer
-          example: 400
-        type:
-          type: string
-          example: "bad request"
-        detail:
-          type: string
-          example: "The server cannot or will not process the request due to something that is perceived to be a client error"
-    authentication-error:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "client error"
-        code:
-          type: integer
-          example: 401
-        type:
-          type: string
-          example: "unauthorized"
-        detail:
-          type: string
-          example: "The user is not authorized to perform this request"
-    not-found:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "client error"
-        code:
-          type: integer
-          example: 404
-        type:
-          type: string
-          example: "not found"
-        detail:
-          type: string
-          example: "The origin server did not find a current representation for the target resource or is not willing to disclose that one exists"
