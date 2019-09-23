@@ -1074,7 +1074,7 @@ paths:
                 - /v2/entities/<entity_name>?sort=name.asc
                 - /v2/entities/<entity_name>?sort=name.desc
         - in: query
-          name: filter
+          name: limit
           schema:
             type: string
           example: /v2/entities/<entity_name>?limit=5
