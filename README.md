@@ -15,3 +15,6 @@ docker run -p 80:8080 -e SWAGGER_JSON=/tmp/swagger.yml -v `pwd`:/tmp swaggerapi/
 ```
 
 After making changes to the `swagger.yml` you will need to refresh your browser to see the updates (there is no need to restart the Docker container).
+
+Or if you prefer you can view the Swagger directly at:
+https://api-spec.dev.refdata.homeoffice.gov.uk/
