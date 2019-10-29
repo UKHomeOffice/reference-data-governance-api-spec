@@ -8,7 +8,7 @@ spec:
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: ref-data-gov-api-spec
+      name: ref-data-gov-api-spec
   template:
     metadata:
       labels:
