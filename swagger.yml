@@ -1103,6 +1103,10 @@ paths:
 
                 - /v2/entities/<entity_name>?name=eq.null
 
+            Supports `contains` filtering, example:
+
+                - /v2/entities/<entity_name>?name=contains.Ped
+
             Supports single and multiple `neq` (not equal) filtering, example:
 
                 - /v2/entities/<entity_name>?filter=continent=neq.AS&filter=continent=eq.EU
