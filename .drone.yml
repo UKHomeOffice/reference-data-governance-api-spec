@@ -20,6 +20,7 @@ steps:
     event:
     - push
 
+
 - name: vulnerability-scan
   pull: always
   image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
@@ -100,6 +101,7 @@ steps:
     status:
     - success
     - failure
+
 
 services:
 - name: docker
