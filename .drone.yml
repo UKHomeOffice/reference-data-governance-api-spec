@@ -1,70 +1,116 @@
-pipeline:
+---
+kind: pipeline
+type: kubernetes
+name: default
 
-  build:
-    image: quay.io/ukhomeofficedigital/drone-docker
-    commands:
-      - docker build -t ref-data-gov-api-spec:$${DRONE_COMMIT_SHA} .
-    when:
-      branch: master
-      event: push
+platform:
+  os: linux
+  arch: amd64
 
-  vulnerability-scan:
-    image: quay.io/ukhomeofficedigital/anchore-submission:latest
-    dockerfile: Dockerfile
-    image_name: ref-data-gov-api-spec:${DRONE_COMMIT_SHA}
-    local_image: true
-    tolerate: low
-    fail_on_detection: false
-    when:
-      branch: master
-      event: push
+steps:
+- name: build
+  pull: always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+  commands:
+  - n=0; while [ "$n" -lt 60 ] && [ ! docker stats --no-stream ]; do n=$(( n + 1 )); sleep 1; done
+  - docker build -t ref-data-gov-api-spec:$${DRONE_COMMIT_SHA} .
+  when:
+    branch:
+    - master
+    event:
+    - push
 
-  image_to_quay:
-    image: quay.io/ukhomeofficedigital/drone-docker
-    secrets:
-      - DOCKER_USERNAME
-      - DOCKER_PASSWORD
+
+- name: vulnerability-scan
+  pull: always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
+  environment:
+    DOCKERFILE: Dockerfile
+    IMAGE_NAME: ref-data-gov-api-spec:${DRONE_COMMIT_SHA}
+    LOCAL_IMAGE: true
+    TOLERATE: low
+    WHITELIST_FILE: whitelist
+  when:
+    branch:
+    - master
+    event:
+    - push
+
+- name: image_to_quay
+  image: plugins/docker
+  settings:
     registry: quay.io
     repo: quay.io/ukhomeofficedigital/ref-data-gov-api-spec
     tags:
-      - ${DRONE_BUILD_NUMBER}
-      - ${DRONE_COMMIT_SHA}
-      - latest
-    when:
-      branch: master
-      event: [ push, deployment ]
+    - ${DRONE_BUILD_NUMBER}
+    - ${DRONE_COMMIT_SHA}
+    - latest
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: DOCKER_PASSWORD
+    DOCKER_USERNAME:
+      from_secret: DOCKER_USERNAME
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - promote
 
-  deploy_to_dev:
-    image: quay.io/ukhomeofficedigital/kd
-    secrets:
-      - DEV_HOSTNAME
-      - DEV_KUBE_NAMESPACE
-      - DEV_KUBE_SERVER
-      - DEV_KUBE_TOKEN
-    commands:
-      - export HOSTNAME=$${DEV_HOSTNAME}
-      - export KUBE_NAMESPACE=$${DEV_KUBE_NAMESPACE}
-      - export KUBE_SERVER=$${DEV_KUBE_SERVER}
-      - export KUBE_TOKEN=$${DEV_KUBE_TOKEN}
-      - kd --insecure-skip-tls-verify -f kube/deployment.yml -f kube/service.yml -f kube/ingress.yml -f kube/network-policy.yml
-    when:
-      branch: master
-      event: [ push, deployment ]
+- name: deploy_to_dev
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/kd
+  commands:
+  - export HOSTNAME=$${DEV_HOSTNAME}
+  - export KUBE_NAMESPACE=$${DEV_KUBE_NAMESPACE}
+  - export KUBE_SERVER=$${DEV_KUBE_SERVER}
+  - export KUBE_TOKEN=$${DEV_KUBE_TOKEN}
+  - kd --insecure-skip-tls-verify -f kube/deployment.yml -f kube/service.yml -f kube/ingress.yml -f kube/network-policy.yml
+  environment:
+    DEV_HOSTNAME:
+      from_secret: DEV_HOSTNAME
+    DEV_KUBE_NAMESPACE:
+      from_secret: DEV_KUBE_NAMESPACE
+    DEV_KUBE_SERVER:
+      from_secret: DEV_KUBE_SERVER
+    DEV_KUBE_TOKEN:
+      from_secret: DEV_KUBE_TOKEN
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - promote
 
-  notify:
-    image: plugins/slack
-    secrets: [ SLACK_WEBHOOK ]
+- name: notify
+  pull: if-not-exists
+  image: plugins/slack
+  settings:
     channel: cop-deployments
+    template: "{{#build.deployTo}}\n  *{{repo.name}} - Build {{build.number}} - {{uppercasefirst build.deployTo}} - {{uppercase build.status}}*\n  {{build.link}}\n{{else}}\n  *{{repo.name}} - Build {{build.number}} - Development - {{uppercase build.status}}*\n  {{build.link}}\n{{/build.deployTo}}\n"
     username: Drone Build Watcher
-    template: >
-      {{#build.deployTo}}
-        *{{repo.name}} - Build {{build.number}} - {{uppercasefirst build.deployTo}} - {{uppercase build.status}}*
-        {{build.link}}
-      {{else}}
-        *{{repo.name}} - Build {{build.number}} - Development - {{uppercase build.status}}*
-        {{build.link}}
-      {{/build.deployTo}}
-    when:
-      branch: master
-      event: [ push, deployment ]
-      status: [ success, failure ]
+  environment:
+    SLACK_WEBHOOK:
+      from_secret: SLACK_WEBHOOK
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - promote
+    status:
+    - success
+    - failure
+
+
+services:
+- name: docker
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/dind
+
+- name: anchore-submission-server
+  pull: always
+  image: 340268328991.dkr.ecr.eu-west-2.amazonaws.com/acp/anchore-submission:latest
+  commands:
+  - /run.sh server
+
+...
