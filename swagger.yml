@@ -322,6 +322,8 @@ paths:
       description: |
         Get an entity data items.
 
+        By default, only returns data items that have a valid date, i.e. expired entities are hidden from the response.
+
         Supports query string parameters (optional) to search within the entity.
       parameters:
         - in: path
@@ -1026,6 +1028,8 @@ paths:
       summary: Get an entity data items.
       description: |
         Get an entity data items.
+
+        By default, only returns data items that have a valid date, i.e. expired entities are hidden from the response.
 
         Supports query string parameters (optional) to search within the entity.
       parameters:
