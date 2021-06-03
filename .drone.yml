@@ -15,8 +15,8 @@ steps:
   - n=0; while [ "$n" -lt 60 ] && [ ! docker stats --no-stream ]; do n=$(( n + 1 )); sleep 1; done
   - docker build -t ref-data-gov-api-spec:$${DRONE_COMMIT_SHA} .
   when:
-    branch:
-    - master
+  #  branch:
+  #  - master
     event:
     - push
 
